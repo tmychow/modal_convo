@@ -11,7 +11,7 @@ from .llm import Mistral
 from .stt import Whisper
 from .tts import XTTS
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
@@ -31,11 +31,21 @@ def web():
     @web_app.get("/")
     def root():
         return {"message": "Hello, World"}
+    
+    # @web_app.post("/holding")
+    # async def holding_respond(request: Request):
+    #     body = await request.json()
+    #     prompt = body["text"]
+    #     return Response(content=prompt, media_type="text/plain")
+    #     body = await request.json()
+    #     prompt = body["text"]
+    #     response = llm.generate.remote(prompt)
+    #     return Response(content=response, media_type="text/plain")
 
     @web_app.post("/voice_response")
-    async def voice_respond(request: Request):
-        audio = await request.json()
-        transcript = stt.transcribe.remote(audio)
+    async def voice_respond(request: Request, audio: UploadFile = File(...)):
+        contents = await audio.read()
+        transcript = stt.transcribe.remote(contents)
         response = llm.generate.remote(transcript)
         verbalise = tts.speak.remote(response)
         return Response(content=verbalise, media_type="audio/wav")
