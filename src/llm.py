@@ -44,8 +44,8 @@ class Mistral:
 
         encodeds = self.tokenizer.apply_chat_template(messages, return_tensors="pt")
         model_inputs = encodeds.to(self.model.device)
-        generated = self.model.generate(**model_inputs, max_new_tokens=100, do_sample=True)
-        decoded = self.tokenizer.decode(generated)
+        generated = self.model.generate(model_inputs, max_new_tokens=100, do_sample=True)
+        decoded = self.tokenizer.batch_decode(generated)
         print(f"Response generated in {time.time() - t0:.2f} seconds")
         return decoded[0]
     
@@ -53,4 +53,4 @@ class Mistral:
 def main(input):
     model = Mistral()
     for val in model.generate.remote(input):
-        print(val)
+        print(val, end="")

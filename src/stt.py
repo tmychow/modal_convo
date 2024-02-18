@@ -16,3 +16,7 @@ whisper_image = (
 
 with whisper_image.imports():
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+@stub.cls(image=whisper_image, gpu="A10G", container_idle_timeout=180)
+class Whisper:
+    
