@@ -2,11 +2,13 @@
 Speech to text with Whisper
 """
 
+# TODO: Add checkpoint local so it doesn't reload
+
 import time
 
 from modal import Image, method, Mount
 
-from .common import stub
+from .common import stub, vol
 
 MODEL_NAME = "openai/whisper-large-v3"
 
@@ -19,7 +21,7 @@ whisper_image = (
 with whisper_image.imports():
     from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-@stub.cls(image=whisper_image, gpu="A10G", container_idle_timeout=180, mounts=[Mount.from_local_file(local_path="female.wav", remote_path="/root/src/female.wav")])
+@stub.cls(image=whisper_image, gpu="A100", container_idle_timeout=180, mounts=[Mount.from_local_file(local_path="female.wav", remote_path="/root/src/female.wav")], volumes={"/my-vol": vol})
 class Whisper:
     def __enter__(self):
         import torch
@@ -28,11 +30,7 @@ class Whisper:
         device = "cuda" if self.use_cuda else "cpu"
         self.processor = AutoProcessor.from_pretrained(MODEL_NAME)
         self.model = AutoModelForSpeechSeq2Seq.from_pretrained(MODEL_NAME).to(device)
-
-    @method()
-    def transcribe(self, audio):
-        t0 = time.time()
-        pipe = pipeline(
+        self.pipe = pipeline(
         "automatic-speech-recognition",
         model=self.model,
         tokenizer=self.processor.tokenizer,
@@ -42,8 +40,13 @@ class Whisper:
         batch_size=16,
         return_timestamps=True,
         )
-        result = pipe(audio)
-        print(f"Transcription completed in {time.time() - t0:.2f} seconds")
+
+    @method()
+    def transcribe(self, audio):
+        # t0 = time.time()
+        vol.reload()
+        result = self.pipe(audio)
+        # print(f"Transcription completed in {time.time() - t0:.2f} seconds")
         print(result["text"])
         return result["text"]
 

@@ -2,11 +2,14 @@
 LLM with Mistral
 """
 
+# TODO: add LORA
+
+
 import time
 
 from modal import Image, build, enter, method, gpu, Secret
 
-from .common import stub
+from .common import stub, vol
 
 import os
 
