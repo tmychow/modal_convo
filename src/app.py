@@ -23,19 +23,18 @@ def web():
     tts = XTTS()
 
     @web_app.post("/voice_response")
-    async def voice_respond(request: Request):
-        audio = await request.body()
+    def voice_respond(request: Request):
+        audio = request.body()
         transcript = stt.transcribe(audio)
         response = llm.generate(transcript)
         verbalise = tts.speak(response)
         return Response(content=verbalise, media_type="audio/wav")
     
     @web_app.post("/text_response")
-    async def text_respond(request: Request):
-        text = await request.body()
+    def text_respond(request: Request):
+        text = request.body()
         response = llm.generate(text)
         return Response(content=response, media_type="text/plain")
     
     web_app.mount("/", StaticFiles(directory="/assets", html=True))
     return web_app
-

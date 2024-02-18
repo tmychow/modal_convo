@@ -49,8 +49,8 @@ class Mistral:
         print(f"Response generated in {time.time() - t0:.2f} seconds")
         return decoded[0]
     
-@stub.local_entrypoint()
-def main(input):
-    model = Mistral()
-    for val in model.generate.remote(input):
-        print(val, end="")
+# @stub.local_entrypoint()
+# def main(input):
+#     model = Mistral()
+#     for val in model.generate.remote(input):
+#         print(val, end="")
