@@ -2,8 +2,6 @@
 Speech to text with Whisper
 """
 
-# TODO: Add checkpoint local so it doesn't reload
-
 import time
 
 from modal import Image, method, Mount
