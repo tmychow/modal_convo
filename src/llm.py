@@ -18,7 +18,7 @@ mistral_image = (
 with mistral_image.imports():
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-@stub.cls(image=mistral_image, gpu="T4", container_idle_timeout=300)
+@stub.cls(image=mistral_image, gpu="A100", container_idle_timeout=300)
 class Mistral:
     @build()
     def download_model(self):
@@ -46,6 +46,8 @@ class Mistral:
         model_inputs = encodeds.to(self.model.device)
         generated = self.model.generate(model_inputs, max_new_tokens=100, do_sample=True)
         decoded = self.tokenizer.batch_decode(generated)
+        latest = decoded[0].split("[/INST]")[-1] if "[/INST]" in decoded[0] else decoded[0]
+        stripped = latest.replace("</s>", "").strip()
         print(f"Response generated in {time.time() - t0:.2f} seconds")
         return decoded[0]
     

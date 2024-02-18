@@ -15,6 +15,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
+from pydantic import BaseModel
+
+class Prompt(BaseModel):
+    text: str
+
+@stub.function()
 @asgi_app()
 def web():
     web_app = FastAPI()
@@ -22,19 +28,24 @@ def web():
     llm = Mistral()
     tts = XTTS()
 
+    @web_app.get("/")
+    def root():
+        return {"message": "Hello, World"}
+
     @web_app.post("/voice_response")
-    def voice_respond(request: Request):
-        audio = request.body()
-        transcript = stt.transcribe(audio)
-        response = llm.generate(transcript)
-        verbalise = tts.speak(response)
+    async def voice_respond(prompt: Prompt):
+        audio = await prompt.text
+        transcript = stt.transcribe.remote(audio)
+        response = llm.generate.remote(transcript)
+        verbalise = tts.speak.remote(response)
         return Response(content=verbalise, media_type="audio/wav")
     
     @web_app.post("/text_response")
-    def text_respond(request: Request):
-        text = request.body()
-        response = llm.generate(text)
+    async def text_respond(request: Request):
+        body = await request.json()
+        prompt = body["text"]
+        response = llm.generate.remote(prompt)
         return Response(content=response, media_type="text/plain")
     
-    web_app.mount("/", StaticFiles(directory="/assets", html=True))
+    # web_app.mount("/", StaticFiles(directory="/assets", html=True))
     return web_app
