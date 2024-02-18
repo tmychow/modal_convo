@@ -33,8 +33,8 @@ def web():
         return {"message": "Hello, World"}
 
     @web_app.post("/voice_response")
-    async def voice_respond(prompt: Prompt):
-        audio = await prompt.text
+    async def voice_respond(request: Request):
+        audio = await request.json()
         transcript = stt.transcribe.remote(audio)
         response = llm.generate.remote(transcript)
         verbalise = tts.speak.remote(response)

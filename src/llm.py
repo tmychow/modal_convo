@@ -4,11 +4,27 @@ LLM with Mistral
 
 import time
 
-from modal import Image, build, enter, method
+from modal import Image, build, enter, method, gpu, Secret
 
 from .common import stub
 
+import os
+
+MODEL_DIR = "/model"
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.1"
+
+def download_model_to_folder():
+    from huggingface_hub import snapshot_download
+    from transformers.utils import move_cache
+
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    snapshot_download(
+        BASE_MODEL,
+        local_dir=MODEL_DIR,
+        token=os.environ["HF_TOKEN"],
+    )
+    move_cache()
 
 mistral_image = (
     Image.debian_slim(python_version="3.10")
@@ -18,7 +34,7 @@ mistral_image = (
 with mistral_image.imports():
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-@stub.cls(image=mistral_image, gpu="A100", container_idle_timeout=300)
+@stub.cls(image=mistral_image, gpu=gpu.A100(memory=80, count=2), container_idle_timeout=300, concurrency_limit=8, allow_concurrent_inputs=True)
 class Mistral:
     @build()
     def download_model(self):
@@ -49,7 +65,7 @@ class Mistral:
         latest = decoded[0].split("[/INST]")[-1] if "[/INST]" in decoded[0] else decoded[0]
         stripped = latest.replace("</s>", "").strip()
         print(f"Response generated in {time.time() - t0:.2f} seconds")
-        return decoded[0]
+        return stripped
     
 # @stub.local_entrypoint()
 # def main(input):
